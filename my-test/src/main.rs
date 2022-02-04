@@ -4,6 +4,8 @@ use std::convert::From;
 use std::fmt;
 use rand::Rng;
 
+mod mymod;
+
 trait Animal {
 	fn print_species(&self);
 	fn print_age(&self);
@@ -328,16 +330,75 @@ fn main() {
 		println!("Invalid");
 	}
 
-	if let var = false {
-		println!("Var is true");
-	} else {
-		println!("Var is false");
+	let number = 10;
+	if let 9 = number {
+		println!("Number is 9");
+	} else if let 10 = number {
+		println!("Number is 10");
 	}
 
-	let number = 10;
-	if let 10 = number {
+	let mut num = Some(0);
+	while let Some(i) = num {
+		if i >= 10 {
+			break;
+		}
+
 		println!("Value of I: {}", i);
+		num = Some(i + 1);
 	}
+
+	let closure_sum = |x : i32, y : i32| -> i32 { x + y };
+	println!("10 + 20 = {}", closure_sum(10, 20));
+
+	let mystr = String::from("This is a string");
+	let closure_print = || println!("My String: {}", mystr);
+	closure_print(); // will not move 'mystr'
+	println!("My String Again: {}", mystr);
+
+	let vec = vec![10, 20, 30, 40, 50];
+	let printvec = move || {
+		println!("Vector: {:?}", vec);
+	};
+
+	printvec();
+	printvec();
+
+	let get_square = |i : i32| i * i;
+	let result = call_closure(get_square, 16);
+	println!("Call Closure Result: {:?}", result);
+
+	let my_fn = create_fn();
+	let mut my_fnmut = create_fnmut();
+	let my_fnonce = create_fnonce();
+
+	my_fn();
+	my_fnmut();
+	my_fnonce();
+
+	mymod::my_pub_function();
+	mymod::mysubmod::my_pub_function();
+	let mut myobj = mymod::MyStruct::new();
+	myobj.myint = 69;
+	// myobj.myprivint = 420; // private field cannot be accessed
+	myobj.set_private(420);
+	println!("My Int: {}", myobj.myint);
+	// println!("My Private Int: {}", myobj.myprivint);
+	myobj.print_private();
+
+	use this_function_has_a_very_long_name as long_func;
+	long_func();
+
+	struct MyGeneric<T> (T);
+	let igen : MyGeneric<i32> = MyGeneric(10);
+	let cgen = MyGeneric('c');
+	let bgen = MyGeneric(true);
+	println!("Value of igen: {:?}", igen.0);
+	println!("Value of cgen: {:?}", cgen.0);
+	println!("Value of bgen: {:?}", bgen.0);
+}
+
+fn this_function_has_a_very_long_name() {
+	println!("Function with long name");
 }
 
 fn check_even_range(n1 : u32, n2 : u32) {
@@ -360,4 +421,20 @@ fn my_test(test : &MyTest) {
 
 fn print_animal_species(animal : &dyn Animal) {
 	animal.print_species();
+}
+
+fn call_closure<F>(f : F, arg : i32) -> i32 where F : Fn(i32) -> i32 {
+	f(arg)
+}
+
+fn create_fn() -> impl Fn() {
+	move || println!("This is an Fn function")
+}
+
+fn create_fnmut() -> impl FnMut() {
+	move || println!("This is an FnMut function")
+}
+
+fn create_fnonce() -> impl FnOnce() {
+	move || println!("This is an FnOnce function")
 }
