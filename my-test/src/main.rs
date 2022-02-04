@@ -1,3 +1,14 @@
+use std::fs::File;
+use std::io::prelude::*;
+use std::convert::From;
+use std::fmt;
+use rand::Rng;
+
+trait Animal {
+	fn print_species(&self);
+	fn print_age(&self);
+}
+
 fn main() {
 	// this is a comment
 	/*
@@ -69,15 +80,284 @@ fn main() {
 	let shadow = true;
 	println!("Shadow: {}", shadow);
 
+	let myvar = "hello";
+	let myref = &myvar;
+
+	println!("My Reference: {}", myref);
 	
+	/*
+	 * // does not work, myref is immutable
+	 * let mut myval = 10;
+	 * let myref = &myval;
+	 * *myref += 1;
+	 */
+
+	/*
+	 * // does not work, myval is immutable
+	 * let myval = 10;
+	 * let myref = &mut myval;
+	 * *myref += 1;
+	 */
+	
+	let mut myval = 10;
+	let myref = &mut myval;
+	*myref += 1;
+
+	println!("My Value (Ref): {}", myref);
+	println!("My Value: {}", myval); // doesn't work on older versions because myval has been borrowed or smth
+
+	struct Person {
+		name : String,
+		age : u8
+	}
+
+	let person = Person { name: "John".to_string(), age : 27 };
+	println!("Name: {}", person.name);
+	println!("Age: {}", person.age);
+
+	//Tuple Struct
+
+	struct MyColor (u8, u8, u8);
+
+	let mycolor = MyColor(255, 0, 0);
+	println!("My Color: {} {} {}", mycolor.0, mycolor.1, mycolor.2);
+	let mytest = MyTest { value: 10 };
+
+	// does not work if parameter is not a reference (&MyTest), as 'mytest'
+	// will be moved to a different scope
+	my_test(&mytest);
+	my_test(&mytest);
+
+	let mut numbers : [u128;3] = [0;3]; // 3 uint128 values of 0
+	numbers[0] = 0xFFFFFFFF;
+	numbers[1] = 0xFFFFFFFFFFFFFFFF;
+	numbers[2] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+	println!("Numbers Length: {}", numbers.len());
+	for num in numbers.iter() {
+		println!("Number: {}", num);
+	}
+
+	let mut file = File::open("test.txt").expect("Unable to open file!");
+	let mut fdata = String::new();
+	file.read_to_string(&mut fdata).expect("Unable to read file!");
+	println!("Contents of 'test.txt': {}", fdata);
+
+	// Implement functions for struct Person
+	impl Person {
+		fn print_info(&self) {
+			println!("Name: {}", self.name);
+			println!("Age: {}", self.age);
+		}
+	}
+
+	let person = Person { name: "John Doe".to_string(), age : 69 };
+	person.print_info();
+
+	struct Dog {
+		age : u16
+	}
+
+	// Implement Animal trait for Dog struct
+	impl Animal for Dog {
+		fn print_species(&self) {
+			println!("The animal is a dog");
+		}
+
+		fn print_age(&self) {
+			println!("The dog's age is: {}", self.age);
+		}
+	}
+
+	let dog = Dog { age: 3 };
+	print_animal_species(&dog);
+
+	let exp0 = {
+		let x = 10;
+		let y = 20;
+		x * y // no semicolon, this value will be assigned to exp0
+	};
+	println!("Expression 0: {}", exp0);
+
+	let exp1 = {
+		let x = 20;
+		let y = 30;
+		x * y; // there is semicolon, an empty tuple will be assigned
+	};
+	println!("Expression 1: {:?}", exp1);
+
+	struct Number {
+		num : i32
+	}
+
+	impl From<i32> for Number {
+		fn from(num : i32) -> Self {
+			Number { num: num }
+		}
+	}
+
+	impl fmt::Display for Number { // 'automagically' implements ToString trait
+		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+			write!(f, "Number({})", self.num) // return supressed by avoiding semicolon
+		}
+	}
+
+	let number = Number::from(32);
+	println!("Number Struct: {}", number);
+
+	// what the fuck ???
+	let rnum = rand::thread_rng().gen_range(0..100); // random number [0-100)
+	let num = 
+		if rnum < 50 {
+			0
+		} else {
+			rnum * 10
+		};
+	
+	println!("Random number: {}", rnum);
+	println!("Number: {}", num);
+
+	// break outter loops
+	let mut n = 0;
+	'outter: loop {
+		loop {
+			n += 1;
+			print!("{} ", n);
+			if n >= 10 {
+				break 'outter;
+			}
+		}
+
+		println!("This statement will not run");
+	}
+	println!("");
+
+	// return value from loop
+	n = 0;
+	let j = loop {
+		n += 1;
+		if n >= 10 {
+			break n; // return 'n' from loop
+		}
+	};
+	println!("The value of J is: {}", j);
+
+	print!("Yet another for loop: ");
+	for n in 1..=5 { // loop from [1, 5]
+		print!("{} ", n);
+	}
+	println!("");
+
+	// match
+	let rnum = rand::thread_rng().gen_range(1..15);
+	println!("Random Number: {}", rnum);
+	match rnum {
+		1 => println!("The number is one"),
+		2 | 3 | 4 => println!("The number is 2 or 3 or 4"),
+		5..=10 => println!("The number is in the range [5, 15]"),
+		_ => println!("The number is greater than 15")
+	}
+
+	// destructure tuples
+	let tuple = (1, 5, 10);
+	match tuple {
+		(1, 1, 1) => println!("The tuple is full of ones"),
+		(1, 5, ..) => println!("The tuple starts with 1, 5"),
+		_ => println!("The tuple is unknown")
+	}
+
+	// destructure pointers
+	let var = 10;
+	let var_ref = &var;
+	match var_ref {
+		&val => println!("Destructured reference: {}", val)
+	}
+
+	match *var_ref {
+		val => println!("Value from dereference: {}", val)
+	}
+
+	let mut var = Some(Number::from(32));
+	match var {
+		// ref used to prevent var from being consumed
+		Some(ref mut var_newref) => {
+			println!("New reference: {}", var_newref);
+			(*var_newref).num += 10;
+			var_newref.num *= 10;
+		},
+		_ => println!("None")
+	}
+	println!("Var is still accessible: {}", var.unwrap());
+
+	// destructure structs
+	struct Person2 {
+		id : char,
+		age : u8
+	}
+	let person = Person2 { id: 'B', age: 45 };
+	match person {
+		Person2 { id: 'A', age: 24 } => println!("Hello, Alice!"),
+		Person2 { id: 'B', .. } => println!("Welcome, Bob"),
+		_ => println!("User unknown")
+	}
+
+	let tuple = (1, 2, 3);
+	match tuple {
+		(1, y, 3) if y > 5 => println!("Tuple: (1, y, 3), y > 5"),
+		(2, y, 5) if y <= 0 => println!("Tuple: (2, y, 5), y <= 0"),
+		(1, y, 3) if y > 0 && y < 3 => println!("Tuple: (1, y, 3), 0 < y < 3"),
+		_ => println!("Tuple unidentified")
+	}
+
+	let number = Some(10);
+	if let Some(i) = number {
+		println!("Value of I: {}", i);
+	}
+
+	let inval : Option<i32> = None;
+	// pattern matching in if
+	if let Some(j) = inval {
+		println!("Variable is not None");
+	} else {
+		println!("Variable is None");
+	}
+
+	if inval != None {
+		println!("Valid");
+	} else {
+		println!("Invalid");
+	}
+
+	if let var = false {
+		println!("Var is true");
+	} else {
+		println!("Var is false");
+	}
+
+	let number = 10;
+	if let 10 = number {
+		println!("Value of I: {}", i);
+	}
 }
 
 fn check_even_range(n1 : u32, n2 : u32) {
-	for i in n1..n2 {
+	for i in n1 .. n2 {
 		println!("Is {} even? {}", i, is_even(i));
 	}
 }
 
 fn is_even(n : u32) -> bool {
 	return n & (1 << 0) == 0;
+}
+
+struct MyTest {
+	value : u32
+}
+
+fn my_test(test : &MyTest) {
+	println!("Test: {}", test.value);
+}
+
+fn print_animal_species(animal : &dyn Animal) {
+	animal.print_species();
 }
