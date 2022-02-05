@@ -3,12 +3,22 @@ use std::io::prelude::*;
 use std::convert::From;
 use std::fmt;
 use rand::Rng;
+use std::ops::{Add, Sub};
+use std::thread;
 
 mod mymod;
 
 trait Animal {
 	fn print_species(&self);
 	fn print_age(&self);
+}
+
+trait MyPrinter {
+	fn print(&self);
+}
+
+trait MyPrinter2 {
+	fn print2(&self);
 }
 
 fn main() {
@@ -395,6 +405,122 @@ fn main() {
 	println!("Value of igen: {:?}", igen.0);
 	println!("Value of cgen: {:?}", cgen.0);
 	println!("Value of bgen: {:?}", bgen.0);
+
+	struct TestPrinter {
+		id : i32,
+		key : i32
+	}
+
+	impl MyPrinter for TestPrinter {
+		fn print(&self) {
+			println!("{{ id : {}, key : {} }}", self.id, self.key);
+		}
+	}
+
+	let printer = TestPrinter { id: 73, key: 694201337 };
+	test_printer(&printer);
+
+	// multiple bounds
+	struct TestPrinter2 {
+		name : String,
+		weight : u32
+	}
+
+	impl MyPrinter for TestPrinter2 {
+		fn print(&self) {
+			println!("{{ name : \"{}\", weight : {} }}", self.name, self.weight);
+		}
+	}
+
+	impl MyPrinter2 for TestPrinter2 {
+		fn print2(&self) {
+			println!("This is TestPrinter2");
+		}
+	}
+
+	let printer2 = TestPrinter2 { name: String::from("Car"), weight: 500 };
+	test_printer2(&printer2);
+
+	// struct with no data, only functions
+	struct ImplStruct {  }
+	impl ImplStruct {
+		fn test_func(&self) {
+			println!("ImplStruct works");
+		}
+	}
+
+	let test = ImplStruct {  };
+	test.test_func();
+
+	// lifetime
+	struct Person3<'a> {
+		name : &'a str,
+		age : u8
+	}
+
+	let person = Person3 { name: "John Doe", age: 32 };
+	println!("Person Name: {}", person.name);
+	
+	#[derive(Copy, Clone)] // Implement copy/clone traits
+	struct ReverseMath {
+		number : i32
+	}
+
+	impl fmt::Display for ReverseMath {
+		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+			write!(f, "ReverseMath({})", self.number)
+		}
+	}
+
+	impl Add for ReverseMath {
+		type Output = Self;
+
+		fn add(self, other : Self) -> Self {
+			Self { number: self.number - other.number }
+		}
+	}
+
+	impl Sub for ReverseMath {
+		type Output = Self;
+
+		fn sub(self, other : Self) -> Self {
+			Self { number: self.number + other.number }
+		}
+	}
+
+	let rmath = ReverseMath { number: 30 };
+	let op0 = ReverseMath { number: 10 };
+	let op1 = ReverseMath { number: 20 };
+
+	println!("{} + {} = {}", rmath, op0, rmath + op0);
+	println!("{} - {} = {}", rmath, op1, rmath - op1);
+
+	let is_valid_int = | i : Option<i32> | {
+		let result = match i {
+			Some(i) => { println!("The integer is valid"); true },
+			None => { println!("The integer is not valid"); false }
+		};
+
+		result
+	};
+
+	// Threads
+	let thread = thread::spawn(|| println!("This is a thread"));
+	match thread.join() {
+		Ok(_t) => println!("The thread.join call succeeded"),
+		Err(_t) => println!("The thread.join call failed")
+	}
+
+	// Some and None
+	let mut integer = Some(10);
+	is_valid_int(integer);
+	// OBS: Unwrapping 'None' will cause panic
+	println!("The integer is: {}", integer.unwrap());
+
+	integer = None;
+	println!("The program will panic");
+	// use ? to unwrap or return None: let myint : i32 = integer?;
+	integer.unwrap(); // panic
 }
 
 fn this_function_has_a_very_long_name() {
@@ -437,4 +563,17 @@ fn create_fnmut() -> impl FnMut() {
 
 fn create_fnonce() -> impl FnOnce() {
 	move || println!("This is an FnOnce function")
+}
+
+// Generic type T needs to implement trait MyPrinter (bounding)
+fn test_printer<T : MyPrinter>(printer : &T) {
+	print!("My Printer: ");
+	printer.print();
+}
+
+fn test_printer2<T : MyPrinter + MyPrinter2>(printer : &T) {
+	print!("My Printer: ");
+	printer.print();
+	print!("My Printer 2: ");
+	printer.print2();
 }
